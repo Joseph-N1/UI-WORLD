@@ -1,0 +1,18 @@
+.info-box {
+    text-align: center;
+  }
+  
+  .info-box p {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .info-box a {
+    display: inline-block;
+    padding: 10px 20px;
+    background: blue;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+  
