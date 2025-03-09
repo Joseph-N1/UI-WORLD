@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Cards</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: black;
+        font-family: Arial, sans-serif;
+      }
+      
+      .box {
+        position: relative;
+        width: 200px; 
+        height: 200px; 
+        transform-style: preserve-3d;
+        animation: animate 40s linear infinite;
+        animation-play-state: running;
+      }
+      
+      @keyframes animate {
+        0% {
+          transform: perspective(1000px) rotateY(0deg);
+        }
+        100% {
+          transform: perspective(1000px) rotateY(360deg);
+        }
+      }
+      
+      .box span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
+        transform-style: preserve-3d;
+        transform: rotateY(calc(var(--i) * 45deg)) translateZ(300px); 
+        -webkit-box-reflect: below 0px linear-gradient(transparent, transparent, #0004);
+        cursor: pointer;
+      }
+      
+      .box span img {
+        position: relative;
+        top: 50%;
+        left: 50%;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 100%;
+        transform: translate(-50%, -50%);
+        border: 2px solid white;
+        border-radius: 18px;
+        object-fit: cover; 
+      }
+      
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        flex-direction: column;
+      }
+      
+      .overlay-content {
+        position: relative;
+        max-width: 80%;
+        max-height: 80%;
+      }
+      
+      .overlay-content img {
+        max-width: 100%;
+        max-height: 70vh;
+        border: 3px solid white;
+        border-radius: 18px;
+      }
+      
+      .close-btn {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        outline: none;
+      }
+      
+      .caption {
+        color: white;
+        text-align: center;
+        margin-top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      
+      .theme-selector {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 50;
+        color: white;
+      }
+      
+      .theme-selector select {
+        padding: 8px;
+        margin-top: 5px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 1px solid white;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="theme-selector">
+      <label for="theme-select">Select Theme:</label>
+      <select id="theme-select">
+        <option value="football">Football</option>
+        <option value="anime">Anime</option>
+      </select>
+    </div>
+    
+    <div class="box" id="card-box">
+      <!-- Cards will be dynamically added via JavaScript -->
+    </div>
+    
+    <div class="overlay" id="overlay">
+      <div class="overlay-content">
+        <button class="close-btn" id="close-btn">&times;</button>
+        <img id="enlarged-img" src="" alt="">
+        <div class="caption" id="caption"></div>
+      </div>
+    </div>
+    
+    <script>
+      // Theme data
+      const themes = {
+        football: {
+          images: [
+            { src: "Images/Img.1.png", caption: "FOOTBALL MOVIES WE NEED...", audio: "audio/football1.mp3" },
+            { src: "Images/Img.2.png", caption: "THE NUMBER 9. CURSE", audio: "audio/football2.mp3" },
+            { src: "Images/Img.3.png", caption: "GIVE ME 2 MINUTES", audio: "audio/football3.mp3" },
+            { src: "Images/Img.4.png", caption: "9 MINUTES IS ENOUGH", audio: "audio/football4.mp3" },
+            { src: "Images/Img.5.png", caption: "THE FOREVER PRINCE", audio: "audio/football5.mp3" },
+            { src: "Images/Img.6.png", caption: "END OF AN ERA", audio: "audio/football6.mp3" },
+            { src: "Images/Img.7.png", caption: "THE MOST UNDERRATED", audio: "audio/football7.mp3" },
+            { src: "Images/Img.8.png", caption: "THE FLAME THAT DIDN'T LIGHT", audio: "audio/football8.mp3" }
+          ],
+          backgroundColor: "black"
+        },
+        anime: {
+          images: [
+            { src: "Images/anime1.jpg", caption: "KING'S SPEECH!", audio: "audio/anime1.mp3" },
+            { src: "Images/anime2.jpg", caption: "PERFECTION", audio: "audio/anime2.mp3" },
+            { src: "Images/anime3.jpg", caption: "WAKE UP TO REALITY", audio: "audio/anime3.mp3" },
+            { src: "Images/anime4.jpg", caption: "MAKETE KATE", audio: "audio/anime4.mp3" },
+            { src: "Images/anime5.jpg", caption: "ODINARY ME", audio: "audio/anime5.mp3" },
+            { src: "Images/anime6.jpg", caption: "YOU THINK I AM SPECIAL?", audio: "audio/anime6.mp3" },
+            { src: "Images/anime7.jpg", caption: "10X MORE THAN ANYONE", audio: "audio/anime7.mp3" },
+            { src: "Images/anime8.jpg", caption: "I WONDER", audio: "audio/anime8.mp3" }
+          ],
+          backgroundColor: "#1a0033"
+        }
+        // Add more themes as needed
+      };
+      
+      // DOM elements
+      const box = document.getElementById('card-box');
+      const overlay = document.getElementById('overlay');
+      const enlargedImg = document.getElementById('enlarged-img');
+      const caption = document.getElementById('caption');
+      const closeBtn = document.getElementById('close-btn');
+      const themeSelect = document.getElementById('theme-select');
+      
+      let currentAudio = null;
+      
+      // Load theme
+      function loadTheme(themeName) {
+        // Clear existing cards
+        box.innerHTML = '';
+        
+        // Set background color
+        document.body.style.background = themes[themeName].backgroundColor;
+        
+        // Add cards for the selected theme
+        themes[themeName].images.forEach((image, index) => {
+          const span = document.createElement('span');
+          span.style.setProperty('--i', index + 1);
+          
+          const img = document.createElement('img');
+          img.src = image.src;
+          img.alt = image.caption;
+          img.dataset.caption = image.caption;
+          img.dataset.audio = image.audio;
+          
+          span.appendChild(img);
+          box.appendChild(span);
+          
+          // Add click event
+          span.addEventListener('click', () => {
+            enlargedImg.src = image.src;
+            caption.textContent = image.caption;
+            overlay.style.display = 'flex';
+            
+            // Stop rotation
+            box.style.animationPlayState = 'paused';
+            
+            // Play audio
+            if (currentAudio) {
+              currentAudio.pause();
+              currentAudio = null;
+            }
+            
+            currentAudio = new Audio(image.audio);
+            currentAudio.addEventListener('ended', () => {
+              // Resume rotation when audio ends if overlay is closed
+              if (overlay.style.display === 'none') {
+                box.style.animationPlayState = 'running';
+              }
+            });
+            
+            currentAudio.play();
+          });
+        });
+      }
+      
+      // Close overlay
+      closeBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        
+        // Only resume rotation if audio has ended
+        if (!currentAudio || currentAudio.ended) {
+          box.style.animationPlayState = 'running';
+        }
+      });
+      
+      // Theme selector change event
+      themeSelect.addEventListener('change', (e) => {
+        loadTheme(e.target.value);
+      });
+      
+      // Initialize with default theme
+      loadTheme('football');
+    </script>
+  </body>
+</html>
